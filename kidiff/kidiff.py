@@ -185,7 +185,7 @@ def sch_to_svg(kicad_sch_path, repo_path, kicad_project_dir, page_filename, comm
 
     if not settings.sch_plot_prog:
         print("Skipping schematics diff")
-        print("kicad-cli (Kicad >= v7) is missing".format(sch_plot_prog=settings.sch_plot_prog))
+        print("{} (Kicad >= v7) is missing".format(sch_plot_prog=settings.sch_plot_prog))
         return
 
     if not os.path.exists(kicad_sch_path):
@@ -811,6 +811,9 @@ def parse_cli_args():
     parser.add_argument(
         "-n", "--numbers", action="store_true", help="Remove layer names from files, use the id only."
     )
+    parser.add_argument(
+        "-x", "--plot-schematics", action="store_true", help="Plot PCB and Schematics"
+    )
     args = parser.parse_args()
 
     if args.verbose >= 3:
@@ -926,11 +929,13 @@ if __name__ == "__main__":
     page_filename = board_filename.replace(".kicad_pcb", ".kicad_sch")
     kicad_sch_path = kicad_pcb_path.replace(".kicad_pcb", ".kicad_sch")
 
-    scm.get_pages(kicad_sch_path, repo_path, kicad_project_dir, page_filename, commit1, commit2)
+    if args.plot_schematics:
+        scm.get_pages(kicad_sch_path, repo_path, kicad_project_dir, page_filename, commit1, commit2)
     commit1, commit2, commit_datetimes = scm.get_boards(kicad_pcb_path, repo_path, kicad_project_dir, board_filename, commit1, commit2)
 
     output_dir1, output_dir2 = pcb_to_svg(kicad_pcb_path, repo_path, kicad_project_dir, board_filename, commit1, commit2, args.frame, args.numbers)
-    sch_to_svg(kicad_sch_path, repo_path, kicad_project_dir, page_filename, commit1, commit2, args.frame, args.numbers)
+    if args.plot_schematics:
+        sch_to_svg(kicad_sch_path, repo_path, kicad_project_dir, page_filename, commit1, commit2, args.frame, args.numbers)
 
     generate_assets(repo_path, kicad_project_dir, board_filename, output_dir1, output_dir2)
 
