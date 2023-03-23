@@ -10,7 +10,7 @@ from scms.generic import scm as generic_scm
 class scm(generic_scm):
 
     @staticmethod
-    def get_boards(kicad_pcb_path, repo_path, kicad_project_dir, board_filename, commit1, commit2):
+    def get_boards(kicad_pcb_path, repo_path, kicad_project_dir, board_filename, commit1, commit2, exit_when_equal=1):
         """Given two Fossil artifacts, write out two kicad_pcb files to their respective
         directories (named after the artifacts). Returns the date and time of both commits"""
 

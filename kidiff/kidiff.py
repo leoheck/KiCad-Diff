@@ -56,7 +56,7 @@ def launch_filepicker():
             frame, message="Select Kicad PCB",
             defaultDir="",
             defaultFile="",
-            wildcard="Kicad PCB (*.kicad_pcb)|*.kicad_pcb",
+            wildcard="Kicad files|*.pro;*.sch;*.kicad_pro;*.kicad_sch;*.kicad_pcb|All files|*",
             style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
 
     dialog = openFileDialog.ShowModal()
@@ -173,7 +173,7 @@ def pcb_to_svg(kicad_pcb_path, repo_path, kicad_project_dir, board_filename, com
         print(plot2_stderr)
 
     if not plot1_stdout or not plot2_stdout:
-        print("ERROR: Something happened with {}".format(settings.plot_prog))
+        print("Error while plotting the layout with {}".format(settings.pcb_plot_prog))
         exit(1)
 
     return commit1_hash, commit2_hash
@@ -189,6 +189,7 @@ def sch_to_svg(kicad_sch_path, repo_path, kicad_project_dir, page_filename, comm
         return
 
     if not os.path.exists(kicad_sch_path):
+        print("Missing {}".format(kicad_sch_path))
         return
 
     if settings.verbose > 0:
@@ -220,8 +221,8 @@ def sch_to_svg(kicad_sch_path, repo_path, kicad_project_dir, page_filename, comm
         plot_sch=settings.sch_plot_prog, kicad_sch=page_filename).split(" ")
 
     if settings.verbose > 0:
-        print("cd", commit1_output_path, ";", ' '.join(map(str, plot1_cmd)))
-        print("cd", commit2_output_path, ";", ' '.join(map(str, plot2_cmd)))
+        print("cd", commit1_output_path + ";", ' '.join(map(str, plot1_cmd)))
+        print("cd", commit2_output_path + ";", ' '.join(map(str, plot2_cmd)))
 
     stdout, stderr = settings.run_cmd(commit1_output_path, plot1_cmd)
     plot1_stdout = stdout
@@ -238,8 +239,8 @@ def sch_to_svg(kicad_sch_path, repo_path, kicad_project_dir, page_filename, comm
         print(plot2_stderr)
 
     if not plot1_stdout or not plot2_stdout:
-        print("ERROR: Something happened with {}".format(settings.sch_plot_prog))
-        exit(1)
+        print("Error while ploting schematics with {}".format(settings.sch_plot_prog))
+        # exit(1)
 
     return commit1_hash, commit2_hash
 
@@ -792,13 +793,14 @@ def parse_cli_args():
         help="Does not execute webserver (just generate images)",
     )
     parser.add_argument(
+        "-k", "--keep-going", action="store_false", help="Continue even PCBs don't have changes."
+    )
+    parser.add_argument(
         "-v", "--verbose", action="count", default=0, help="Increase verbosity (-vvv)"
     )
     parser.add_argument(
-        "kicad_pcb", metavar="PCB_PATH", nargs="?", help="Kicad PCB path"
+        "-o", "--output-dir", type=str, default=".kidiff", help="Set output directory. Default is '.kidiff'."
     )
-    parser.add_argument(
-        "-o", "--output-dir", type=str, default=".kidiff", help="Set output directory. Default is '.kidiff'.")
     parser.add_argument(
         "-l", "--list-commits", action="store_true", help="List commits and exit"
     )
@@ -812,8 +814,9 @@ def parse_cli_args():
         "-n", "--numbers", action="store_true", help="Remove layer names from files, use the id only."
     )
     parser.add_argument(
-        "-x", "--plot-schematics", action="store_true", help="Plot PCB and Schematics"
+        "kicad_file", metavar="KICAD_FILE", nargs="?", help="Path of Kicad file. .kicad_pro for both schematics and layout, .kicad_sch for schematics only, .kicad_pcb for layout only). Old .pro and .sch files will fallback to layout only."
     )
+
     args = parser.parse_args()
 
     if args.verbose >= 3:
@@ -832,21 +835,31 @@ if __name__ == "__main__":
     if args.verbose:
         settings.verbose = args.verbose
 
-    if args.kicad_pcb is None:
-        kicad_pcb_path, kicad_project_path, board_filename = launch_filepicker()
+    if args.kicad_file is None:
+        kicad_file_path, kicad_project_path, board_filename = launch_filepicker()
     else:
-        kicad_pcb_path = os.path.realpath(args.kicad_pcb)
-        kicad_project_path = os.path.dirname(kicad_pcb_path)
-        board_filename = os.path.basename(os.path.realpath(args.kicad_pcb))
+        kicad_file_path = os.path.realpath(args.kicad_file)
+        kicad_project_path = os.path.dirname(kicad_file_path)
+        board_filename = os.path.basename(os.path.realpath(args.kicad_file))
 
-        if not os.path.exists(args.kicad_pcb):
-            print("Kicad file {} does not exit".format(args.kicad_pcb))
+        if not os.path.exists(args.kicad_file):
+            print("Kicad file {} does not exit".format(args.kicad_file))
             exit(1)
 
-        _, extension = os.path.splitext(args.kicad_pcb)
-        if extension != ".kicad_pcb":
-            print("The file {} seems not to be a Kicad PCB".format(args.kicad_pcb))
-            exit(1)
+    _, extension = os.path.splitext(kicad_file_path)
+    export_mode = "x"
+    if extension == ".kicad_pro":
+        print("Exporting schematics and layouts")
+        export_mode = "all"
+    if extension == ".kicad_sch":
+        print("Exporting schematics only")
+        export_mode = "sch"
+    if extension == ".kicad_pcb":
+        print("Exporting layouts only")
+        export_mode = "pcb"
+    if extension == ".pro" or extension == ".sch":
+        print("Exporting layouts only")
+        export_mode = "pcb"
 
     project_scms = get_project_scms(kicad_project_path)
 
@@ -877,8 +890,8 @@ if __name__ == "__main__":
     )
 
     if args.output_dir == ".kidiff":
-        kicad_pcb_dir = os.path.dirname(kicad_pcb_path)
-        settings.output_dir = os.path.join(kicad_pcb_dir, args.output_dir)
+        kicad_file_dir = os.path.dirname(kicad_file_path)
+        settings.output_dir = os.path.join(kicad_file_dir, args.output_dir)
     else:
         settings.output_dir = os.path.realpath(args.output_dir)
 
@@ -888,9 +901,12 @@ if __name__ == "__main__":
         except OSError as e:
             pass
 
+    kicad_sch_path = kicad_file_path.replace(extension, ".kicad_sch")
+    kicad_pcb_path = kicad_file_path.replace(extension, ".kicad_pcb")
+
     print("")
     print("      SCM Selected:", scm_name, avaialble_scms)
-    print("  Kicad Board Path:", kicad_pcb_path)
+    print("   Kicad File Path:", kicad_file_path)
     print("Kicad Project Path:", kicad_project_path)
     print("         REPO Path:", repo_path)
     print(" Kicad Project Dir:", kicad_project_dir)
@@ -927,14 +943,13 @@ if __name__ == "__main__":
     print("Commit 2 (b):", commit2)
 
     page_filename = board_filename.replace(".kicad_pcb", ".kicad_sch")
-    kicad_sch_path = kicad_pcb_path.replace(".kicad_pcb", ".kicad_sch")
 
-    if args.plot_schematics:
+    if export_mode == "all" or export_mode == "sch":
         scm.get_pages(kicad_sch_path, repo_path, kicad_project_dir, page_filename, commit1, commit2)
-    commit1, commit2, commit_datetimes = scm.get_boards(kicad_pcb_path, repo_path, kicad_project_dir, board_filename, commit1, commit2)
+    commit1, commit2, commit_datetimes = scm.get_boards(kicad_pcb_path, repo_path, kicad_project_dir, board_filename, commit1, commit2, args.keep_going)
 
     output_dir1, output_dir2 = pcb_to_svg(kicad_pcb_path, repo_path, kicad_project_dir, board_filename, commit1, commit2, args.frame, args.numbers)
-    if args.plot_schematics:
+    if export_mode == "all" or export_mode == "sch":
         sch_to_svg(kicad_sch_path, repo_path, kicad_project_dir, page_filename, commit1, commit2, args.frame, args.numbers)
 
     generate_assets(repo_path, kicad_project_dir, board_filename, output_dir1, output_dir2)
