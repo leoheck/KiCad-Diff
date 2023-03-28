@@ -186,7 +186,7 @@ def sch_to_svg(kicad_sch_path, repo_path, kicad_project_dir, page_filename, comm
     if not settings.sch_plot_prog:
         print("Skipping schematics diff")
         print("{} (Kicad >= v7) is missing".format(sch_plot_prog=settings.sch_plot_prog))
-        return
+        return None, None
 
     if not os.path.exists(kicad_sch_path):
         print("Missing {}".format(kicad_sch_path))
@@ -945,8 +945,9 @@ if __name__ == "__main__":
     page_filename = board_filename.replace(".kicad_pcb", ".kicad_sch")
 
     if export_mode == "all" or export_mode == "sch":
-        scm.get_pages(kicad_sch_path, repo_path, kicad_project_dir, page_filename, commit1, commit2)
-    commit1, commit2, commit_datetimes = scm.get_boards(kicad_pcb_path, repo_path, kicad_project_dir, board_filename, commit1, commit2, args.keep_going)
+        commit1, commit2, commit_datetimes = scm.get_pages(kicad_sch_path, repo_path, kicad_project_dir, page_filename, commit1, commit2)
+    else:
+        commit1, commit2, commit_datetimes = scm.get_boards(kicad_pcb_path, repo_path, kicad_project_dir, board_filename, commit1, commit2, args.keep_going)
 
     output_dir1, output_dir2 = pcb_to_svg(kicad_pcb_path, repo_path, kicad_project_dir, board_filename, commit1, commit2, args.frame, args.numbers)
     if export_mode == "all" or export_mode == "sch":
