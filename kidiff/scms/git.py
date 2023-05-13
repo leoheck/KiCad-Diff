@@ -39,7 +39,7 @@ class scm(generic_scm):
         if (not commit1 == board_filename) and (not commit2 == board_filename):
             cmd = ["git", "diff", "--name-only", artifact1, artifact2, "."]
 
-            stdout, stderr = settings.run_cmd(repo_path, cmd)
+            stdout, _stderr, _ret = settings.run_cmd(repo_path, cmd)
             changed = (prj_path + board_filename) in stdout
 
             if not changed:
@@ -68,14 +68,14 @@ class scm(generic_scm):
             gitArtifact2 = ["git", "show", artifact2 + ":" + board_subpath]
 
         if not commit1 == board_filename:
-            stdout, stderr = settings.run_cmd(repo_path, gitArtifact1)
+            stdout, _stderr, _ret = settings.run_cmd(repo_path, gitArtifact1)
             with open(os.path.join(outputDir1, board_filename), "w") as fout1:
                 fout1.write(stdout)
         else:
             shutil.copyfile(kicad_pcb_path, os.path.join(outputDir1, board_filename))
 
         if not commit2 == board_filename:
-            stdout, stderr = settings.run_cmd(repo_path, gitArtifact2)
+            stdout, _stderr, _ret = settings.run_cmd(repo_path, gitArtifact2)
             with open(os.path.join(outputDir2, board_filename), "w") as fout2:
                 fout2.write(stdout)
         else:
@@ -88,7 +88,7 @@ class scm(generic_scm):
             gitDateTime2 = ["git", "show", "-s", '--format="%ci"', artifact2]
 
         if not commit1 == board_filename:
-            stdout, stderr = settings.run_cmd(repo_path, gitDateTime1)
+            stdout, _stderr, _ret = settings.run_cmd(repo_path, gitDateTime1)
             dateTime1 = stdout
             date1, time1, UTC = dateTime1.split(" ")
             time1 = date1 + " " + time1
@@ -98,7 +98,7 @@ class scm(generic_scm):
             time1 = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(modTimesinceEpoc))
 
         if not commit2 == board_filename:
-            stdout, stderr = settings.run_cmd(repo_path, gitDateTime2)
+            stdout, _stderr, _ret = settings.run_cmd(repo_path, gitDateTime2)
             dateTime2 = stdout
             date2, time2, UTC = dateTime2.split(" ")
             time2 = date2 + " " + time2
@@ -140,7 +140,7 @@ class scm(generic_scm):
         if (not commit1 == page_filename) and (not commit2 == page_filename):
             cmd = ["git", "diff", "--name-only", artifact1, artifact2, "."]
 
-            stdout, stderr = settings.run_cmd(repo_path, cmd)
+            stdout, _stderr, _ret = settings.run_cmd(repo_path, cmd)
             changed = (prj_path + page_filename) in stdout
 
             if not changed:
@@ -168,14 +168,14 @@ class scm(generic_scm):
             gitArtifact2 = ["git", "show", artifact2 + ":" + page_subpath]
 
         if not commit1 == page_filename:
-            stdout, stderr = settings.run_cmd(repo_path, gitArtifact1)
+            stdout, _stderr, _ret = settings.run_cmd(repo_path, gitArtifact1)
             with open(os.path.join(outputDir1, page_filename), "w") as fout1:
                 fout1.write(stdout)
         else:
             shutil.copyfile(kicad_sch_path, os.path.join(outputDir1, page_filename))
 
         if not commit2 == page_filename:
-            stdout, stderr = settings.run_cmd(repo_path, gitArtifact2)
+            stdout, _stderr, _ret = settings.run_cmd(repo_path, gitArtifact2)
             with open(os.path.join(outputDir2, page_filename), "w") as fout2:
                 fout2.write(stdout)
         else:
@@ -188,11 +188,11 @@ class scm(generic_scm):
             gitDateTime2 = ["git", "show", "-s", '--format="%ci"', artifact2]
 
         if not commit1 == page_filename:
-            stdout, stderr = settings.run_cmd(repo_path, gitDateTime1)
+            stdout, _stderr, _ret = settings.run_cmd(repo_path, gitDateTime1)
             # print(stdout)
 
         if not commit2 == page_filename:
-            stdout, stderr = settings.run_cmd(repo_path, gitDateTime2)
+            stdout, _stderr, _ret = settings.run_cmd(repo_path, gitDateTime2)
             # print(stdout)
 
     @staticmethod
@@ -200,7 +200,7 @@ class scm(generic_scm):
         """Returns list of artifacts from a directory"""
 
         cmd = ["git", "log", "--date=format-local:%Y-%m-%d %H:%M:%S", "--pretty=format:%h | %ad | %an | %s", os.path.join(kicad_project_dir, board_file)]
-        stdout, _ = settings.run_cmd(repo_path, cmd)
+        stdout, _stderr, _ret = settings.run_cmd(repo_path, cmd)
         artifacts = ["local"] + stdout.splitlines()
 
         return artifacts
@@ -211,7 +211,7 @@ class scm(generic_scm):
 
         cmd = ["git", "rev-parse", "--show-toplevel"]
 
-        stdout, _ = settings.run_cmd(kicad_project_path, cmd)
+        stdout, _stderr, _ret = settings.run_cmd(kicad_project_path, cmd)
         repo_path = stdout.strip()
 
         kicad_project_dir = os.path.relpath(kicad_project_path, repo_path)
