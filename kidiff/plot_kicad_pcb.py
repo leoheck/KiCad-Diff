@@ -51,9 +51,11 @@ def processBoard(board_path, plot_dir, quiet=1, verbose=0, plot_frame=0, id_only
         # LoadBoard gives me this
         # ../src/common/stdpbase.cpp(62): assert "traits" failed in Get(): create wxApp before calling this
         board = pn.LoadBoard(board_path)
-    except:
-        print("Wrong version of the API")
-        print("Try sourcing 'env-nightly.sh' instead.")
+    except Exception as e:
+        print(f"Error when trying to load board at '{board_path}'", file=sys.stderr)
+        print(e, file=sys.stderr)
+        print("Wrong version of the API", file=sys.stderr)
+        print("Try sourcing 'env-nightly.sh' instead.", file=sys.stderr)
         exit(1)
 
     print("")
