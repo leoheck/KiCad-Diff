@@ -33,7 +33,7 @@ class scm(generic_scm):
 
             cmd = ["fossil", "diff", "--brief", "-r", artifact1, "--to", artifact2]
 
-            stdout, stderr = settings.run_cmd(repo_path, cmd)
+            stdout, _stderr, _ret = settings.run_cmd(repo_path, cmd)
             changed = ".kicad_pcb" in stdout
 
             if not changed:
@@ -89,10 +89,10 @@ class scm(generic_scm):
             timeDiff2 = time.strftime("%H:%M:%S", time.localtime(modTimesinceEpoc))
 
         if not commit1 == board_filename:
-            stdout, stderr = settings.run_cmd(repo_path, fossilArtifact1)
+            stdout, _stderr, _ret = settings.run_cmd(repo_path, fossilArtifact1)
             with open(os.path.join(outputDir1, board_filename), "w") as f:
                 f.write(stdout)
-            dateTime, _ = settings.run_cmd(repo_path, fossilDateTime1)
+            dateTime, _stderr, _ret = settings.run_cmd(repo_path, fossilDateTime1)
             (
                 uuid,
                 _,
@@ -112,10 +112,10 @@ class scm(generic_scm):
             shutil.copyfile(kicad_pcb_path, os.path.join(outputDir1, board_filename))
 
         if not commit2 == board_filename:
-            stdout, stderr = settings.run_cmd(repo_path, fossilArtifact2)
+            stdout, _stderr, _ret = settings.run_cmd(repo_path, fossilArtifact2)
             with open(os.path.join(outputDir2, board_filename), "w") as f:
                 f.write(stdout)
-            dateTime, _ = settings.run_cmd(repo_path, fossilDateTime2)
+            dateTime, _stderr, _ret = settings.run_cmd(repo_path, fossilDateTime2)
             (
                 uuid,
                 _,
@@ -144,7 +144,7 @@ class scm(generic_scm):
 
         cmd = ["fossil", "finfo", "-b", os.path.join(kicad_project_dir, board_filename)]
 
-        stdout, stderr = settings.run_cmd(repo_path, cmd)
+        stdout, _stderr, _ret = settings.run_cmd(repo_path, cmd)
         artifacts = [board_filename] + [
             a.replace(" ", " | ", 4) for a in stdout.splitlines()
         ]
@@ -157,7 +157,7 @@ class scm(generic_scm):
 
         cmd = ["fossil", "status"]
 
-        stdout, _ = settings.run_cmd(kicad_project_path, cmd)
+        stdout, _stderr, _ret = settings.run_cmd(kicad_project_path, cmd)
         repo_path = stdout.split()[3]
 
         kicad_project_dir = os.path.relpath(kicad_project_path, repo_path)

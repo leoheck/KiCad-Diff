@@ -33,7 +33,7 @@ class scm(generic_scm):
         if (not commit1 == board_filename) and (not commit2 == board_filename):
             cmd = ["svn", "diff", "--summarize", "-r", artifact1 + ":" + artifact2, prj_path + board_filename,]
 
-            stdout, stderr = settings.run_cmd(repo_path, cmd)
+            stdout, _stderr, _ret = settings.run_cmd(repo_path, cmd)
             changed, *boardName = stdout
 
             if changed != "M":
@@ -60,14 +60,14 @@ class scm(generic_scm):
             svnArtifact2 = ["svn", "cat", "-r", artifact2, board_subpath]
 
         if not commit1 == board_filename:
-            stdout, stderr = settings.run_cmd(repo_path, svnArtifact1)
+            stdout, _stderr, _ret = settings.run_cmd(repo_path, svnArtifact1)
             with open(os.path.join(outputDir1, board_filename), "w") as fout1:
                 fout1.write(stdout)
         else:
             shutil.copyfile(kicad_pcb_path, os.path.join(outputDir1, board_filename))
 
         if not commit2 == board_filename:
-            stdout, stderr = settings.run_cmd(repo_path, svnArtifact2)
+            stdout, _stderr, _ret = settings.run_cmd(repo_path, svnArtifact2)
             with open(os.path.join(outputDir2, board_filename), "w") as fout2:
                 fout2.write(stdout)
         else:
@@ -80,7 +80,7 @@ class scm(generic_scm):
             svnDateTime2 = ["svn", "log", "-r", artifact2]
 
         if not commit1 == board_filename:
-            stdout, stderr = settings.run_cmd(repo_path, svnDateTime1)
+            stdout, _stderr, _ret = settings.run_cmd(repo_path, svnDateTime1)
             dateTime = stdout
             cmt = (dateTime.splitlines()[1]).split("|")
             _, SVNdate1, SVNtime1, SVNutc, *_ = cmt[2].split(" ")
@@ -93,7 +93,7 @@ class scm(generic_scm):
         time1 = SVNdate1 + " " + SVNtime1
 
         if not commit2 == board_filename:
-            stdout, stderr = settings.run_cmd(repo_path, svnDateTime2)
+            stdout, _stderr, _ret = settings.run_cmd(repo_path, svnDateTime2)
             dateTime = stdout
 
             cmt = (dateTime.splitlines()[1]).split("|")
@@ -113,7 +113,7 @@ class scm(generic_scm):
         """Returns list of revisions from a directory"""
 
         cmd = ["svn", "log", "--xml", "-r", "HEAD:0", os.path.join(kicad_project_dir, board_filename)]
-        stdout, _ = settings.run_cmd(repo_path, cmd)
+        stdout, _stderr, _ret = settings.run_cmd(repo_path, cmd)
 
         root = et.fromstring(stdout)
         commits = []
@@ -140,7 +140,7 @@ class scm(generic_scm):
         """Returns the root folder of the repository"""
 
         cmd = ["svn", "info", "--show-item", "wc-root"]
-        stdout, _ = settings.run_cmd(kicad_project_path, cmd)
+        stdout, _stderr, _ret = settings.run_cmd(kicad_project_path, cmd)
         repo_path = stdout.strip()
 
         kicad_project_dir = os.path.relpath(kicad_project_path, repo_path)

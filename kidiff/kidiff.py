@@ -93,13 +93,13 @@ def get_project_scms(repo_path):
 
     if is_tool_available("git"):
         cmd = ["git", "status"]
-        stdout, stderr = settings.run_cmd(repo_path, cmd)
+        stdout, stderr, _ret = settings.run_cmd(repo_path, cmd)
         if (stdout != "") & (stderr == ""):
             scms.append("git")
 
     if is_tool_available("fossil"):
         cmd = ["fossil", "status"]
-        stdout, stderr = settings.run_cmd(repo_path, cmd)
+        stdout, stderr, _ret = settings.run_cmd(repo_path, cmd)
         if stdout != "":
             scms.append("fossil")
 
@@ -108,7 +108,7 @@ def get_project_scms(repo_path):
             "svn",
             "log",
         ]  # | perl -l4svn log0pe "s/^-+/\n/"'.format(repo_path=repo_path)
-        stdout, stderr = settings.run_cmd(repo_path, cmd)
+        stdout, stderr, _ret = settings.run_cmd(repo_path, cmd)
         if (stdout != "") & (stderr == ""):
             scms.append("svn")
 
@@ -158,21 +158,17 @@ def pcb_to_svg(kicad_pcb_path, repo_path, kicad_project_dir, board_filename, com
         plot1_cmd.append("-n")
         plot2_cmd.append("-n")
 
-    stdout, stderr = settings.run_cmd(commit1_output_path, plot1_cmd)
-    plot1_stdout = stdout
-    plot1_stderr = stderr
+    plot1_stdout, plot1_stderr, plot1_ret = settings.run_cmd(commit1_output_path, plot1_cmd)
 
     if plot1_stderr != "":
-        print(plot1_stderr)
+        print(plot1_stderr, file=sys.stderr)
 
-    stdout, stderr = settings.run_cmd(commit2_output_path, plot2_cmd)
-    plot2_stdout = stdout
-    plot2_stderr = stderr
+    plot2_stdout, plot2_stderr, plot2_ret = settings.run_cmd(commit2_output_path, plot2_cmd)
 
     if plot2_stderr != "":
-        print(plot2_stderr)
+        print(plot2_stderr, file=sys.stderr)
 
-    if not plot1_stdout or not plot2_stdout:
+    if not plot1_stdout or not plot2_stdout or plot1_ret != 0 or plot2_ret != 0:
         print("Error while plotting the layout with {}".format(settings.pcb_plot_prog))
         exit(1)
 
@@ -224,21 +220,17 @@ def sch_to_svg(kicad_sch_path, repo_path, kicad_project_dir, page_filename, comm
         print("cd", commit1_output_path + ";", ' '.join(map(str, plot1_cmd)))
         print("cd", commit2_output_path + ";", ' '.join(map(str, plot2_cmd)))
 
-    stdout, stderr = settings.run_cmd(commit1_output_path, plot1_cmd)
-    plot1_stdout = stdout
-    plot1_stderr = stderr
+    plot1_stdout, plot1_stderr, plot1_ret = settings.run_cmd(commit1_output_path, plot1_cmd)
 
     if plot1_stderr != "":
-        print(plot1_stderr)
+        print(plot1_stderr, file=sys.stderr)
 
-    stdout, stderr = settings.run_cmd(commit2_output_path, plot2_cmd)
-    plot2_stdout = stdout
-    plot2_stderr = stderr
+    plot2_stdout, plot2_stderr, plot2_ret = settings.run_cmd(commit2_output_path, plot2_cmd)
 
     if plot2_stderr != "":
-        print(plot2_stderr)
+        print(plot2_stderr, file=sys.stderr)
 
-    if not plot1_stdout or not plot2_stdout:
+    if not plot1_stdout or not plot2_stdout or plot1_ret != 0 or plot2_ret != 0:
         print("Error while ploting schematics with {}".format(settings.sch_plot_prog))
         # exit(1)
 
@@ -514,7 +506,7 @@ def assemble_html(kicad_pcb_path, repo_path, kicad_project_dir, board_filename, 
     board2_path = os.path.join(output_dir2, board_filename)
     diff_path   = os.path.join(settings.output_dir, "diff.txt")
 
-    stdout, stderr = settings.run_cmd(settings.output_dir, [settings.diffProg, board2_path, board1_path])
+    stdout, _stderr, _ret = settings.run_cmd(settings.output_dir, [settings.diffProg, board2_path, board1_path])
 
     with open(diff_path, "a") as fout:
         fout.write(stdout)

@@ -45,7 +45,7 @@ class bcolors:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
-def run_cmd(exec_path: str, cmd: List[str]) -> Tuple[str, str]:
+def run_cmd(exec_path: str, cmd: List[str]) -> Tuple[str, str, int]:
 
     if verbose > 1:
         print("")
@@ -78,4 +78,4 @@ def run_cmd(exec_path: str, cmd: List[str]) -> Tuple[str, str]:
             print(bcolors.FAIL + "Code:", str(ret) + bcolors.ENDC)
 
 
-    return stdout.strip("\n "), stderr
+    return stdout.strip("\n "), stderr, ret
