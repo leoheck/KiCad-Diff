@@ -105,12 +105,16 @@ def processBoard(board_path, plot_dir, quiet=1, verbose=0, plot_frame=0, id_only
     popt.SetPlotFrameRef(plot_frame)
     # popt.SetDrillMarksType(pn.PCB_PLOT_PARAMS.NO_DRILL_SHAPE)
 
+    # Kicad >= 7.0.5
+    if ((version_major >= 7) and (version_minor >= 0) and (version_patch >= 5)):
+        popt.SetSvgPrecision(aPrecision=5)
+
     # Kicad >= 6.0.3
-    if ((version_major >= 6) and (version_minor >= 0) and (version_patch >= 3)):
+    elif ((version_major >= 6) and (version_minor >= 0) and (version_patch >= 3)):
         popt.SetSvgPrecision(aPrecision=5, aUseInch=False)
 
     # Kicad >= 5.99
-    if (version_major >= 6) or ((version_major == 5) and (version_minor == 99)):
+    elif (version_major >= 6) or ((version_major == 5) and (version_minor == 99)):
         popt.SetWidthAdjust(pn.FromMM(0.15))
 
     # Kicad < 5.99
