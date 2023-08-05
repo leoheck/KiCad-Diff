@@ -103,22 +103,25 @@ def processBoard(board_path, plot_dir, quiet=1, verbose=0, plot_frame=0, id_only
     popt.SetPlotValue(True)
     popt.SetPlotInvisibleText(False)
     popt.SetPlotFrameRef(plot_frame)
-    # popt.SetDrillMarksType(pn.PCB_PLOT_PARAMS.NO_DRILL_SHAPE)
 
     # Kicad >= 7.0.5
     if ((version_major >= 7) and (version_minor >= 0) and (version_patch >= 5)):
-        popt.SetSvgPrecision(aPrecision=5)
+        popt.SetDrillMarksType(pn.DRILL_MARKS_NO_DRILL_SHAPE)
+        popt.SetSvgPrecision(aPrecision=2)
 
     # Kicad >= 6.0.3
     elif ((version_major >= 6) and (version_minor >= 0) and (version_patch >= 3)):
-        popt.SetSvgPrecision(aPrecision=5, aUseInch=False)
+        popt.SetDrillMarksType(pn.PCB_PLOT_PARAMS.NO_DRILL_SHAPE)
+        popt.SetSvgPrecision(aPrecision=2, aUseInch=False)
 
     # Kicad >= 5.99
     elif (version_major >= 6) or ((version_major == 5) and (version_minor == 99)):
+        popt.SetDrillMarksType(pn.PCB_PLOT_PARAMS.NO_DRILL_SHAPE)
         popt.SetWidthAdjust(pn.FromMM(0.15))
 
     # Kicad < 5.99
     else:
+        popt.SetDrillMarksType(pn.PCB_PLOT_PARAMS.NO_DRILL_SHAPE)
         popt.SetPlotFrameRef(False) # This breaks with Kicad 5.*
         popt.SetLineWidth(pn.FromMM(0.15))
         popt.SetScale(2)
