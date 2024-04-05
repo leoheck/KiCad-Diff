@@ -109,8 +109,8 @@ def processBoard(board_path, plot_dir, quiet=1, verbose=0, plot_frame=0, id_only
         pn.DRILL_MARKS_NO_DRILL_SHAPE
         popt.SetSvgPrecision(aPrecision=2)
 
-    # Kicad >= 7.0.5
-    elif ((version_major >= 7) and (version_minor >= 0) and (version_patch >= 5)):
+    # Kicad >= 7.0.0
+    elif ((version_major >= 7) and (version_minor >= 0) and (version_patch >= 0)):
         popt.SetDrillMarksType(pn.DRILL_MARKS_NO_DRILL_SHAPE)
         popt.SetSvgPrecision(aPrecision=2)
 
