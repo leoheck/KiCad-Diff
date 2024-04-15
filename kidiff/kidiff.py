@@ -141,8 +141,8 @@ def pcb_to_svg(kicad_pcb_path, repo_path, kicad_project_dir, board_filename, com
     if not os.path.exists(commit2_output_path):
         os.makedirs(commit2_output_path)
 
-    plot1_cmd = "{plot_pcb} -o pcb {kicad_pcb}".format(plot_pcb=settings.pcb_plot_prog, kicad_pcb=board_filename).split(" ")
-    plot2_cmd = "{plot_pcb} -o pcb {kicad_pcb}".format(plot_pcb=settings.pcb_plot_prog, kicad_pcb=board_filename).split(" ")
+    plot1_cmd = "{plot_pcb} -o pcb \"{kicad_pcb}\"".format(plot_pcb=settings.pcb_plot_prog, kicad_pcb=board_filename).split(" ")
+    plot2_cmd = "{plot_pcb} -o pcb \"{kicad_pcb}\"".format(plot_pcb=settings.pcb_plot_prog, kicad_pcb=board_filename).split(" ")
 
     if settings.verbose > 0:
         print("cd", commit1_output_path + ";", " ".join(map(str, plot1_cmd)))
@@ -210,10 +210,10 @@ def sch_to_svg(kicad_sch_path, repo_path, kicad_project_dir, page_filename, comm
     if not os.path.exists(commit2_output_path):
         os.makedirs(commit2_output_path)
 
-    plot1_cmd = "{plot_sch} sch export svg --black-and-white --no-background-color -o sch {kicad_sch}".format(
+    plot1_cmd = "{plot_sch} sch export svg --black-and-white --no-background-color -o sch \"{kicad_sch}\"".format(
         plot_sch=settings.sch_plot_prog, kicad_sch=page_filename).split(" ")
 
-    plot2_cmd = "{plot_sch} sch export svg --black-and-white --no-background-color -o sch {kicad_sch}".format(
+    plot2_cmd = "{plot_sch} sch export svg --black-and-white --no-background-color -o sch \"{kicad_sch}\"".format(
         plot_sch=settings.sch_plot_prog, kicad_sch=page_filename).split(" ")
 
     if settings.verbose > 0:
