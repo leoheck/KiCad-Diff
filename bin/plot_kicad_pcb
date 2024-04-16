@@ -30,7 +30,7 @@ readlink_osx()
 
 case ${OSTYPE} in
 
-	# MaxOS
+	# macOS
 	darwin*)
 		SCRIPT=$(readlink_osx "${0}")
 		SCRIPTPATH=$(dirname "${SCRIPT}")

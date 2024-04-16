@@ -22,6 +22,7 @@ if platform.system() == "Darwin":
 
 if platform.system() == "Linux":
     sys.path.insert(0, "/usr/lib/kicad/lib/python3/dist-packages/") # Kicad 7
+    sys.path.insert(0, "/usr/lib/python3/dist-packages/") # Kicad 8
 
 import pcbnew as pn
 
