@@ -189,17 +189,43 @@ class scm(generic_scm):
 
         if not commit1 == page_filename:
             stdout, _stderr, _ret = settings.run_cmd(repo_path, gitDateTime1)
-            # print(stdout)
+            dateTime1 = stdout
+            date1, time1, UTC = dateTime1.split(" ")
+            time1 = date1 + " " + time1
+        else:
+            artifact1 = page_filename
+            modTimesinceEpoc = os.path.getmtime(kicad_sch_path)
+            time1 = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(modTimesinceEpoc))
 
         if not commit2 == page_filename:
             stdout, _stderr, _ret = settings.run_cmd(repo_path, gitDateTime2)
-            # print(stdout)
+            dateTime2 = stdout
+            date2, time2, UTC = dateTime2.split(" ")
+            time2 = date2 + " " + time2
+        else:
+            artifact2 = page_filename
+            modTimesinceEpoc = os.path.getmtime(kicad_sch_path)
+            time2 = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(modTimesinceEpoc))
+
+        return artifact1, artifact2, time1 + " " + time2
+
 
     @staticmethod
-    def get_artefacts(repo_path, kicad_project_dir, board_file):
+    def get_artefacts(repo_path, kicad_project_dir, board_file, export_mode):
         """Returns list of artifacts from a directory"""
 
-        cmd = ["git", "log", "--date=format-local:%Y-%m-%d %H:%M:%S", "--pretty=format:%h | %ad | %an | %s", os.path.join(kicad_project_dir, board_file)]
+        if export_mode == "sch":
+            files_to_find = ["*.sch", "*.kicad_sch"]
+        elif export_mode == "pcb":
+            files_to_find = ["*.pcb", "*.kicad_pcb"]
+        else: # export_mode == "all":
+            files_to_find = ["*.sch", "*.kicad_sch", "*.pcb", "*.kicad_pcb"]
+
+        path_files_to_find = []
+        for f in files_to_find:
+            path_files_to_find.append(os.path.join(kicad_project_dir, f))
+
+        cmd = ["git", "log", "--date=format-local:%Y-%m-%d %H:%M:%S", "--pretty=format:%h | %ad | %an | %s"] + path_files_to_find
         stdout, _stderr, _ret = settings.run_cmd(repo_path, cmd)
         artifacts = ["local"] + stdout.splitlines()
 

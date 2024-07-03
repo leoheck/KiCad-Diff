@@ -141,36 +141,104 @@ def pcb_to_svg(kicad_pcb_path, repo_path, kicad_project_dir, board_filename, com
     if not os.path.exists(commit2_output_path):
         os.makedirs(commit2_output_path)
 
-    plot1_cmd = [settings.pcb_plot_prog, "-o", "pcb", board_filename]
-    plot2_cmd = [settings.pcb_plot_prog, "-o", "pcb", board_filename]
+    if not args.plot_pcb_with_kicad_cli:
+        plot1_cmd = [settings.pcb_plot_prog, "-o", "pcb", board_filename]
+        plot2_cmd = [settings.pcb_plot_prog, "-o", "pcb", board_filename]
 
-    if settings.verbose > 0:
-        print("cd", commit1_output_path + ";", " ".join(map(str, plot1_cmd)))
-        print("cd", commit2_output_path + ";", " ".join(map(str, plot2_cmd)))
+        if settings.verbose > 0:
+            print("cd", commit1_output_path + ";", " ".join(map(str, plot1_cmd)))
+            print("cd", commit2_output_path + ";", " ".join(map(str, plot2_cmd)))
 
-    if plot_page_frame:
-        print("Plotting the page with frame")
-        plot1_cmd.append("-f")
-        plot2_cmd.append("-f")
+        if plot_page_frame:
+            print("Plotting the page with frame")
+            plot1_cmd.append("-f")
+            plot2_cmd.append("-f")
 
-    if filename_with_ids_only:
-        print("Generate output files with layer id only")
-        plot1_cmd.append("-n")
-        plot2_cmd.append("-n")
+        if filename_with_ids_only:
+            print("Generate output files with layer id only")
+            plot1_cmd.append("-n")
+            plot2_cmd.append("-n")
 
-    plot1_stdout, plot1_stderr, plot1_ret = settings.run_cmd(commit1_output_path, plot1_cmd)
+        plot1_stdout, plot1_stderr, plot1_ret = settings.run_cmd(commit1_output_path, plot1_cmd)
 
-    if plot1_stderr != "":
-        print(plot1_stderr, file=sys.stderr)
+        if plot1_stderr != "":
+            print(plot1_stderr, file=sys.stderr)
 
-    plot2_stdout, plot2_stderr, plot2_ret = settings.run_cmd(commit2_output_path, plot2_cmd)
+        plot2_stdout, plot2_stderr, plot2_ret = settings.run_cmd(commit2_output_path, plot2_cmd)
 
-    if plot2_stderr != "":
-        print(plot2_stderr, file=sys.stderr)
+        if plot2_stderr != "":
+            print(plot2_stderr, file=sys.stderr)
 
-    if not plot1_stdout or not plot2_stdout or plot1_ret != 0 or plot2_ret != 0:
-        print("Error while plotting the layout with {}".format(settings.pcb_plot_prog))
-        exit(1)
+        if not plot1_stdout or not plot2_stdout or plot1_ret != 0 or plot2_ret != 0:
+            print("Error while plotting the layout with {}".format(settings.pcb_plot_prog))
+            exit(1)
+
+
+    else:
+
+        print("\nPloting pcb layers with kicad-cli, this takes time...")
+
+        board_1_filepath = os.path.join(settings.output_dir, commit1_hash, board_filename)
+        board_2_filepath = os.path.join(settings.output_dir, commit2_hash, board_filename)
+
+        import pcbnew as pn
+        board_1 = pn.LoadBoard(board_1_filepath)
+        board_2 = pn.LoadBoard(board_1_filepath)
+        enabled_layers_1 = board_1.GetEnabledLayers()
+        enabled_layers_2 = board_2.GetEnabledLayers()
+
+        layer_ids_1 = list(enabled_layers_1.Seq())
+        layer_ids_2 = list(enabled_layers_2.Seq())
+
+        try:
+            os.mkdir(os.path.join(settings.output_dir, commit1_hash, "pcb"))
+        except:
+            pass
+
+        for layer_id in layer_ids_1:
+            layer_name = board_1.GetStandardLayerName(layer_id)
+            project_name, _ = os.path.splitext(board_filename)
+            board_1_svg_filepath = os.path.join(settings.output_dir, commit1_hash, "pcb", project_name + "-" + str(layer_id) + "-" + layer_name + ".svg")
+            plot1_cmd = [settings.sch_plot_prog, "pcb", "export", "svg", "--black-and-white", "-o", board_1_svg_filepath, board_1_filepath, "-l", "{},{}".format("Edge.Cuts", layer_name)]
+
+            if not plot_page_frame:
+                plot1_cmd.append("--exclude-drawing-sheet")
+
+            # print(" ".join(str(element) for element in plot1_cmd))
+            plot1_stdout, plot1_stderr, plot1_ret = settings.run_cmd(commit1_output_path, plot1_cmd)
+
+            if plot1_stderr != "":
+                print(plot1_stderr, file=sys.stderr)
+
+            if not plot1_stdout or plot1_ret != 0:
+                print(" ".join(str(element) for element in plot1_cmd))
+                print("Error while plotting the layout with {}".format(settings.sch_plot_prog))
+                exit(1)
+
+        try:
+            os.mkdir(os.path.join(settings.output_dir, commit2_hash, "pcb"))
+        except:
+            pass
+
+        for layer_id in layer_ids_2:
+            layer_name = board_2.GetStandardLayerName(layer_id)
+            project_name, _ = os.path.splitext(board_filename)
+            board_2_svg_filepath = os.path.join(settings.output_dir, commit2_hash, "pcb", project_name + "-" + str(layer_id) + "-" + layer_name + ".svg")
+            plot2_cmd = [settings.sch_plot_prog, "pcb", "export", "svg", "--black-and-white", "-o", board_2_svg_filepath, board_2_filepath, "-l", "{},{}".format("Edge.Cuts", layer_name)]
+
+            if not plot_page_frame:
+                plot2_cmd.append("--exclude-drawing-sheet")
+
+            # print(" ".join(str(element) for element in plot2_cmd))
+            plot2_stdout, plot2_stderr, plot2_ret = settings.run_cmd(commit2_output_path, plot2_cmd)
+
+            if plot1_stderr != "":
+                print(plot1_stderr, file=sys.stderr)
+
+            if not plot2_stdout or plot2_ret != 0:
+                print(" ".join(str(element) for element in plot2_cmd))
+                print("Error while plotting the layout with {}".format(settings.sch_plot_prog))
+                exit(1)
 
     return commit1_hash, commit2_hash
 
@@ -520,7 +588,7 @@ def assemble_html(kicad_pcb_path, repo_path, kicad_project_dir, board_filename, 
     # pcbs
     svg_path_pcbs = []
     if os.path.exists(os.path.join(source_dir, "pcb")):
-        svg_pcbs = sorted(fnmatch.filter(os.listdir(os.path.join(source_dir, "pcb")), project_name + '-[0-9][0-9]-*.svg'))
+        svg_pcbs = sorted(fnmatch.filter(os.listdir(os.path.join(source_dir, "pcb")), project_name + '-[0-9][0-9]*.svg'))
         svg_path_pcbs = [os.path.join("pcb", svg_file) for svg_file in svg_pcbs]
 
     svg_files = svg_path_schs + svg_path_pcbs
@@ -745,7 +813,8 @@ class WebServerHandler(http.server.SimpleHTTPRequestHandler):
         return
 
 
-def start_web_server(port, kicad_project_path):
+def start_web_server(port, webserver_dirpath):
+    os.chdir(webserver_dirpath)
     with socketserver.TCPServer(("", port), WebServerHandler) as httpd:
         url = "http://127.0.0.1:{port}/web/index.html".format(port=str(port))
         print("")
@@ -805,6 +874,12 @@ def parse_cli_args():
     parser.add_argument(
         "kicad_file", metavar="KICAD_FILE", nargs="?", help="Path of Kicad file. .kicad_pro for both schematics and layout, .kicad_sch for schematics only, .kicad_pcb for layout only). Old .pro and .sch files will fallback to layout only."
     )
+    parser.add_argument(
+        "-x", "--export", metavar="MODE", type=str, default="ext", help="Export mode: ext, all, pcb, sch. Default is ext based on the extension of the file given."
+    )
+    parser.add_argument(
+        "-c", "--plot_pcb_with_kicad_cli", action="store_true", help="Plot PCB with kicad-cli instead of pcb_plot"
+    )
 
     args = parser.parse_args()
 
@@ -836,19 +911,37 @@ if __name__ == "__main__":
             exit(1)
 
     _, extension = os.path.splitext(kicad_file_path)
-    export_mode = "x"
-    if extension == ".kicad_pro":
-        print("Exporting schematics and layouts")
-        export_mode = "all"
-    if extension == ".kicad_sch":
-        print("Exporting schematics only")
+
+    if args.export == "ext":
+
+        if extension == ".kicad_pro":
+            print("Exporting schematics and layouts")
+            export_mode = "all"
+
+        elif extension == ".kicad_sch":
+            print("Exporting schematics only")
+            export_mode = "sch"
+
+        elif extension == ".kicad_pcb":
+            print("Exporting layouts only")
+            export_mode = "pcb"
+
+        elif extension == ".pro" or extension == ".sch":
+            print("Exporting layouts only")
+            export_mode = "pcb"
+
+        else:
+            print("Unknown extension", extension)
+            exit(1)
+
+    elif args.export == "pcb":
+        export_mode = "pcb"
+
+    elif args.export == "sch":
         export_mode = "sch"
-    if extension == ".kicad_pcb":
-        print("Exporting layouts only")
-        export_mode = "pcb"
-    if extension == ".pro" or extension == ".sch":
-        print("Exporting layouts only")
-        export_mode = "pcb"
+
+    else:
+        export_mode = "all"
 
     project_scms = get_project_scms(kicad_project_path)
 
@@ -902,7 +995,7 @@ if __name__ == "__main__":
     print("   Board File Name:", board_filename)
     print("        Output Dir:", settings.output_dir)
 
-    scm_artifacts = scm.get_artefacts(repo_path, kicad_project_dir, board_filename)
+    scm_artifacts = scm.get_artefacts(repo_path, kicad_project_dir, board_filename, export_mode)
 
     if args.verbose >= 1 or args.list_commits:
         print("")
@@ -931,16 +1024,26 @@ if __name__ == "__main__":
     print("Commit 1 (a):", commit1)
     print("Commit 2 (b):", commit2)
 
-    page_filename = board_filename.replace(".kicad_pcb", ".kicad_sch")
+    # page_filename = board_filename.replace(".kicad_pcb", ".kicad_sch")
 
-    if export_mode == "all" or export_mode == "sch":
-        commit1, commit2, commit_datetimes = scm.get_pages(kicad_sch_path, repo_path, kicad_project_dir, page_filename, commit1, commit2)
-    else:
-        commit1, commit2, commit_datetimes = scm.get_boards(kicad_pcb_path, repo_path, kicad_project_dir, board_filename, commit1, commit2, args.keep_going)
+    page_filename = board_filename.split(".")[0] + ".kicad_sch"
+    board_filename = board_filename.split(".")[0] + ".kicad_pcb"
 
-    output_dir1, output_dir2 = pcb_to_svg(kicad_pcb_path, repo_path, kicad_project_dir, board_filename, commit1, commit2, args.frame, args.numbers)
-    if export_mode == "all" or export_mode == "sch":
-        sch_to_svg(kicad_sch_path, repo_path, kicad_project_dir, page_filename, commit1, commit2, args.frame, args.numbers)
+    if export_mode == "sch" or export_mode == "all":
+        _, _, _ = scm.get_pages(kicad_sch_path, repo_path, kicad_project_dir, page_filename, commit1, commit2)
+
+    # export_mode == "pcb" or export_mode == "all"
+    commit1, commit2, commit_datetimes = scm.get_boards(kicad_pcb_path, repo_path, kicad_project_dir, board_filename, commit1, commit2, args.keep_going)
+
+    if export_mode == "sch":
+        output_dir1, output_dir2 = sch_to_svg(kicad_sch_path, repo_path, kicad_project_dir, page_filename, commit1, commit2, args.frame, args.numbers)
+
+    if export_mode == "pcb":
+        output_dir1, output_dir2 = pcb_to_svg(kicad_pcb_path, repo_path, kicad_project_dir, board_filename, commit1, commit2, args.frame, args.numbers)
+
+    if export_mode == "all":
+        output_dir1, output_dir2 = pcb_to_svg(kicad_pcb_path, repo_path, kicad_project_dir, board_filename, commit1, commit2, args.frame, args.numbers)
+        _, _ = sch_to_svg(kicad_sch_path, repo_path, kicad_project_dir, page_filename, commit1, commit2, args.frame, args.numbers)
 
     generate_assets(repo_path, kicad_project_dir, board_filename, output_dir1, output_dir2)
 
@@ -948,7 +1051,7 @@ if __name__ == "__main__":
 
     if not args.webserver_disable:
         try:
-            start_web_server(args.port, kicad_project_dir)
+            start_web_server(args.port, args.output_dir)
         except:
             print("\nPort {} already in use.".format(args.port))
             print("Kill previews server or change the port with '-p PORT_NUMBER'")
