@@ -19,7 +19,7 @@ class commits_dialog(wx.Frame):
 
         dialog.main_group.StaticBox.SetLabel(scm_name + " Repository")
         if kicad_project_dir == ".":
-            kicad_project_dir=""
+            kicad_project_dir = ""
         dialog.board_path.SetLabel(os.path.join(repo_path, kicad_project_dir, board_filename))
 
         for i, artifact in enumerate(scm_artifacts):
@@ -28,11 +28,16 @@ class commits_dialog(wx.Frame):
             dialog.commits_list_2.InsertItem(i, str(i))
             dialog.commits_list_2.SetItem(i, 1, artifact)
 
-        dialog.commits_list_1.Focus(0)
-        dialog.commits_list_1.Select(0)
-
-        dialog.commits_list_2.Focus(1)
-        dialog.commits_list_2.Select(1)
+        if len(scm_artifacts) >= 1:
+            dialog.commits_list_1.Focus(0)
+            dialog.commits_list_1.Select(0)
+            dialog.commits_list_2.Focus(1)
+            dialog.commits_list_2.Select(1)
+        else:
+            dialog.commits_list_1.Focus(0)
+            dialog.commits_list_1.Select(0)
+            dialog.commits_list_2.Focus(0)
+            dialog.commits_list_2.Select(0)
 
         res = dialog.ShowModal()
 
