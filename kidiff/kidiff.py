@@ -1026,7 +1026,11 @@ if __name__ == "__main__":
 
     # page_filename = board_filename.replace(".kicad_pcb", ".kicad_sch")
 
-    page_filename = board_filename.split(".")[0] + ".kicad_sch"
+    if ".kicad_" in extension:
+        page_filename = board_filename.split(".")[0] + ".kicad_sch"
+    else:
+        page_filename = board_filename.split(".")[0] + ".sch"
+
     board_filename = board_filename.split(".")[0] + ".kicad_pcb"
 
     if export_mode == "sch" or export_mode == "all":
