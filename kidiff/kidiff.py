@@ -142,6 +142,9 @@ def pcb_to_svg(kicad_pcb_path, repo_path, kicad_project_dir, board_filename, com
         os.makedirs(commit2_output_path)
 
     if not args.plot_pcb_with_kicad_cli:
+
+        print("\nExporting PCB layers with {}...".format(settings.pcb_plot_prog))
+
         plot1_cmd = [settings.pcb_plot_prog, "-o", "pcb", board_filename]
         plot2_cmd = [settings.pcb_plot_prog, "-o", "pcb", board_filename]
 
@@ -150,12 +153,11 @@ def pcb_to_svg(kicad_pcb_path, repo_path, kicad_project_dir, board_filename, com
             print("cd", commit2_output_path + ";", " ".join(map(str, plot2_cmd)))
 
         if plot_page_frame:
-            print("Plotting the page with frame")
+            print("- Plotting layers with the page frame")
             plot1_cmd.append("-f")
             plot2_cmd.append("-f")
 
         if filename_with_ids_only:
-            print("Generate output files with layer id only")
             plot1_cmd.append("-n")
             plot2_cmd.append("-n")
 
@@ -176,7 +178,7 @@ def pcb_to_svg(kicad_pcb_path, repo_path, kicad_project_dir, board_filename, com
 
     else:
 
-        print("\nPloting pcb layers with kicad-cli, this takes time...")
+        print("\nExporting PCB layers with {}, this takes time...".format(settings.sch_plot_prog))
 
         board_1_filepath = os.path.join(settings.output_dir, commit1_hash, board_filename)
         board_2_filepath = os.path.join(settings.output_dir, commit2_hash, board_filename)
@@ -197,8 +199,9 @@ def pcb_to_svg(kicad_pcb_path, repo_path, kicad_project_dir, board_filename, com
 
         for layer_id in layer_ids_1:
             layer_name = board_1.GetStandardLayerName(layer_id)
+            layer_custom_name = board_1.GetLayerName(layer_id)
             project_name, _ = os.path.splitext(board_filename)
-            board_1_svg_filepath = os.path.join(settings.output_dir, commit1_hash, "pcb", project_name + "-" + str(layer_id) + "-" + layer_name + ".svg")
+            board_1_svg_filepath = os.path.join(settings.output_dir, commit1_hash, "pcb", project_name + "-" + "{:02d}".format(layer_id) + "-" + layer_name + ".svg")
             plot1_cmd = [settings.sch_plot_prog, "pcb", "export", "svg", "--black-and-white", "-o", board_1_svg_filepath, board_1_filepath, "-l", "{},{}".format("Edge.Cuts", layer_name)]
 
             if not plot_page_frame:
@@ -222,8 +225,9 @@ def pcb_to_svg(kicad_pcb_path, repo_path, kicad_project_dir, board_filename, com
 
         for layer_id in layer_ids_2:
             layer_name = board_2.GetStandardLayerName(layer_id)
+            layer_custom_name = board_2.GetLayerName(layer_id)
             project_name, _ = os.path.splitext(board_filename)
-            board_2_svg_filepath = os.path.join(settings.output_dir, commit2_hash, "pcb", project_name + "-" + str(layer_id) + "-" + layer_name + ".svg")
+            board_2_svg_filepath = os.path.join(settings.output_dir, commit2_hash, "pcb", project_name + "-" + "{:02d}".format(layer_id) + "-" + layer_name + ".svg")
             plot2_cmd = [settings.sch_plot_prog, "pcb", "export", "svg", "--black-and-white", "-o", board_2_svg_filepath, board_2_filepath, "-l", "{},{}".format("Edge.Cuts", layer_name)]
 
             if not plot_page_frame:
@@ -256,8 +260,7 @@ def sch_to_svg(kicad_sch_path, repo_path, kicad_project_dir, page_filename, comm
         print("Missing {}".format(kicad_sch_path))
         return
 
-    if settings.verbose > 0:
-        print("Exporting SCHs...")
+    print("\nExporting Sch Pages with {}...".format(settings.sch_plot_prog))
 
     commit1_hash = "local"
     commit2_hash = "local"
@@ -588,7 +591,7 @@ def assemble_html(kicad_pcb_path, repo_path, kicad_project_dir, board_filename, 
     # pcbs
     svg_path_pcbs = []
     if os.path.exists(os.path.join(source_dir, "pcb")):
-        svg_pcbs = sorted(fnmatch.filter(os.listdir(os.path.join(source_dir, "pcb")), project_name + '-[0-9][0-9]*.svg'))
+        svg_pcbs = sorted(fnmatch.filter(os.listdir(os.path.join(source_dir, "pcb")), project_name + r'-[0-9][0-9]*.svg'))
         svg_path_pcbs = [os.path.join("pcb", svg_file) for svg_file in svg_pcbs]
 
     svg_files = svg_path_schs + svg_path_pcbs
@@ -613,7 +616,7 @@ def assemble_html(kicad_pcb_path, repo_path, kicad_project_dir, board_filename, 
         else:
             page_id = page_id -1
             layer_id = page_id
-            layer_name = file_name.replace('board-', '')
+            layer_name = file_name.replace(project_name + '-', '')
             layer_name_orig = "Schematic"
 
         triptych_html = file_name + ".html"
