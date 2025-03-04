@@ -1030,11 +1030,11 @@ if __name__ == "__main__":
     # page_filename = board_filename.replace(".kicad_pcb", ".kicad_sch")
 
     if ".kicad_" in extension:
-        page_filename = board_filename.split(".")[0] + ".kicad_sch"
+        page_filename = ".".join(board_filename.split(".")[0:-1]) + ".kicad_sch"
     else:
-        page_filename = board_filename.split(".")[0] + ".sch"
+        page_filename = ".".join(board_filename.split(".")[0:-1]) + ".sch"
 
-    board_filename = board_filename.split(".")[0] + ".kicad_pcb"
+    board_filename = ".".join(board_filename.split(".")[0:-1]) + ".kicad_pcb"
 
     if export_mode == "sch" or export_mode == "all":
         _, _, _ = scm.get_pages(kicad_sch_path, repo_path, kicad_project_dir, page_filename, commit1, commit2)
