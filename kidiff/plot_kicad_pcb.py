@@ -43,6 +43,9 @@ else:
 def processBoard(board_path, plot_dir, quiet=1, verbose=0, plot_frame=0, id_only=0):
     """Load board and initialize plot controller"""
 
+    print("")
+    print("Kicad (PCBNew API) version {}".format(pcbnew_version))
+
     if plot_dir != "./":
         shutil.copy(board_path, plot_dir)
         board_path = os.path.join(os.path.basename(board_path))
@@ -59,8 +62,9 @@ def processBoard(board_path, plot_dir, quiet=1, verbose=0, plot_frame=0, id_only
         print("Try sourcing 'env-nightly.sh' instead.", file=sys.stderr)
         exit(1)
 
-    print("")
-    print("Kicad (PCBNew API) version {}".format(pcbnew_version))
+    if not board:
+        print("Warning: Board empty...", file=sys.stderr)
+        exit(1)
 
     board_version = board.GetFileFormatVersionAtLoad()
 
