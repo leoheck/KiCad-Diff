@@ -106,7 +106,13 @@ def processBoard(board_path, plot_dir, quiet=1, verbose=0, plot_frame=0, id_only
     popt.SetSubtractMaskFromSilk(False)
     popt.SetPlotReference(True)
     popt.SetPlotValue(True)
-    popt.SetPlotInvisibleText(False)
+
+    # Removed on 9.0.1
+    try:
+        popt.SetPlotInvisibleText(False)
+    except:
+        pass
+
     popt.SetPlotFrameRef(plot_frame)
 
     # Kicad >= 8.0.0
